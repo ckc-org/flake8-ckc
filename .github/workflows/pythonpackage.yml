@@ -1,0 +1,48 @@
+name: django-ckc
+
+on:
+  push:
+    branches: [ '*' ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: [3.9.x, 3.10.x, 3.11.x]
+        django-version: ['<4', '>=4']
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install GDAL & spatialite
+      run: |
+        sudo add-apt-repository -y ppa:ubuntugis/ppa && sudo apt-get update
+        sudo apt-get install -y libgdal-dev libsqlite3-mod-spatialite
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Cache pip
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache/pip
+        # Look to see if there is a cache hit for the corresponding requirements file
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          ${{ runner.os }}-
+    - name: Install dependencies
+      run: |
+        echo "Setting versions Django -> ${{ matrix.django-version }} in requirements.txt"
+        sed -i 's/Django==.*/Django${{ matrix.django-version }}/' requirements.txt
+          
+        pip install -r requirements.txt
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8
+
+    - name: Test with pytest
+      run: |
+        pytest

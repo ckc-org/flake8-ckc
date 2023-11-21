@@ -1,0 +1,10 @@
+# These requirements are for local development and testing of the module
+
+# python packaging
+twine==4.0.2
+
+# project packages
+ruff==0.1.6
+
+# tests
+pytest==7.3.2
